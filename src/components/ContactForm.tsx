@@ -1,8 +1,12 @@
 import { useState } from "react";
 
+const SEND_ORDER_URL = "https://functions.poehali.dev/272f97ff-f9bf-440f-926e-2f54977d9d1b";
+
 export default function ContactForm() {
   const [form, setForm] = useState({ name: "", phone: "", occasion: "", comment: "" });
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const occasions = [
     "День рождения",
@@ -13,9 +17,23 @@ export default function ContactForm() {
     "Другой повод",
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(SEND_ORDER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error("Ошибка отправки");
+      setSent(true);
+    } catch {
+      setError("Не удалось отправить заявку. Попробуйте позвонить нам напрямую.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -94,11 +112,14 @@ export default function ContactForm() {
               />
             </div>
 
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+
             <button
               type="submit"
-              className="bg-black text-white px-8 py-4 uppercase text-sm tracking-wide hover:bg-neutral-800 transition-colors w-full lg:w-fit"
+              disabled={loading}
+              className="bg-black text-white px-8 py-4 uppercase text-sm tracking-wide hover:bg-neutral-800 transition-colors w-full lg:w-fit disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Отправить заявку
+              {loading ? "Отправляем..." : "Отправить заявку"}
             </button>
           </form>
         )}
